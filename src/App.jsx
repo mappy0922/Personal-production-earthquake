@@ -2,8 +2,8 @@ import * as d3 from "d3";
 import { useState } from "react";
 
 export default function App() {
-  const width = 1250;
-  const height = 650;
+  const width = window.innerWidth;
+  const height = window.innerHeight;
   
   const imageWidth = 600;
   const imageHeight = 600;
