@@ -34,13 +34,22 @@ h1 {
     font-size: 30px;
 }
 
-.Map-Button {
+.control {
     position: absolute;
     top: 20px;
     left: 20px;
     z-index: 10;
     display: flex;
     gap: 50px;
+}
+
+.item {
+    display: flex;
+    flex-direction: column;
+}
+
+.Select {
+    padding: 5px;
 }
 
 button {
