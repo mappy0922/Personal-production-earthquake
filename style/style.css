@@ -76,6 +76,10 @@ h1 {
     transform: scale(2);
 }
 
+.prefecture {
+    transition: all 0.7s;
+}
+
 button {
     cursor: pointer;
 }

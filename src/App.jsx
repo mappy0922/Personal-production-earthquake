@@ -121,6 +121,20 @@ export default function App() {
     }
   };
 
+  const circleColor = (people) => {
+    if(people >= 100000) {
+      return "deeppink";
+    } else if (people >= 50000) {
+      return "pink";
+    } else if (people >= 10000) {
+      return "teal";
+    } else if (people >= 1000) {
+      return "maroon";
+    } else {
+      return "brown";
+    }
+  };
+
   const svgRef = useRef();
   const zoomRef = useRef();
   const resetRef = useRef();
@@ -384,7 +398,6 @@ export default function App() {
 
               {projectionRef.current && coord.map((item,i) => {
                 const position = projectionRef.current(coords[item]);
-                const people = destinationPoeple[item] || 0;
                 return (
                   <g>
                     <circle
@@ -392,14 +405,15 @@ export default function App() {
                     className="Number-of-people-moving-circle"
                     cx={position[0]}
                     cy={position[1]}
-                    r={Math.log10(people+1)/Scale}
-                    fill="black"
+                    r={Math.log10(destinationPoeple[item]+1)/Scale}
+                    fill={circleColor(destinationPoeple[item])}
                     onClick={() => setPrefecture(item)}
                     />
 
                     {Scale >= 2 && (
                       <text
                       key={i}
+                      className="prefecture"
                       x={position[0]+2}
                       y={position[1]-2}
                       fontSize={8/(Scale/2)}
