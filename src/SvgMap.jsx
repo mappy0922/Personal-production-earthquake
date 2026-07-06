@@ -1,0 +1,169 @@
+export default function SvgMap({
+  svgRef,
+  mapWidth,
+  height,
+  layerRef,
+  projectionRef,
+
+  filterData,
+  coord,
+  coords,
+
+  judge,
+  circleColor,
+  destinationPoeple,
+
+  dataColor,
+  active,
+  Scale,
+
+  setMousePos,
+  setPrefecture,
+  setIsInformation,
+
+  isInformation,
+
+  prefecture,
+}) {
+  return (
+    <svg ref={svgRef} width={mapWidth} height={height}>
+        <g  id="imageLayer">
+
+            <g ref={layerRef}></g>
+            
+            <g id="lineLayer">
+                {projectionRef.current && filterData.map((item,i) => {
+                    const from = projectionRef.current(item.fromCoord);
+                    const to = projectionRef.current(item.toCoord);
+
+                    const line_judge = [5000, 2500, 1000, 100]
+
+                    if(!from || !to) {
+                        return null;
+                    }
+
+                    const mx = (from[0] + to[0]) / 2;
+                    const my = (from[1] + to[1]) / 2;
+
+                    const dx = to[0] - from[0];
+                    const dy = to[1] - from[1];
+
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+
+                    const nx = i % 2 == 0 ? dy / dist : -dy / dist;
+                    const ny = i % 2 == 1 ? dx / dist : -dx / dist;
+
+                    const curveHeight = dist * 2;
+
+                    const cx = mx + nx * curveHeight;
+                    const cy = my + ny * curveHeight;
+
+                    const d = `
+                    M ${from[0]} ${from[1]}
+                    Q ${cx} ${cy}
+                      ${to[0]} ${to[1]}
+                    `;
+
+                
+                    return (
+                        <path
+                        key={i}
+                        className="Number-of-people-moving-line"
+                        d={d}
+                        fill="none"
+                        stroke={dataColor[item.purpose]}
+                        strokeWidth={judge(item.people, line_judge)/Scale}
+                        strokeOpacity={active[item.purpose] ? 0 : 0.5}
+                        onMouseMove={(e)=>{
+                            setMousePos({
+                                x:e.nativeEvent.offsetX,
+                                y:e.nativeEvent.offsetY
+                            });
+                        }}
+                        />
+                    );
+                })}
+
+                {projectionRef.current && coord.map((item,i) => {
+                    const position = projectionRef.current(coords[item]);
+                    const circle_judge = [100000, 50000, 10000, 1000];
+                    return (
+                        <g key={i}>
+                            <circle
+                            className="Number-of-people-moving-circle"
+                            cx={position[0]}
+                            cy={position[1]}
+                            r={judge(destinationPoeple[item], circle_judge)/Scale}
+                            fill={circleColor(destinationPoeple[item])}
+                            onClick={() => setPrefecture(item)}
+                            onMouseEnter={() => setIsInformation(item)}
+                            onMouseLeave={() => setIsInformation(null)}
+                            />
+
+                            {Scale >= 2 && (
+                                <text
+                                className="prefecture"
+                                x={position[0]+2}
+                                y={position[1]-2}
+                                fontSize={8/(Scale/2)}
+                                fill="black"
+                                >
+                                    {item}
+                                </text>
+                            )}
+                        </g>
+                    );
+                })}
+
+                {isInformation && projectionRef.current && (() => {
+                    const p = projectionRef.current(coords[isInformation]);
+                    const s = Scale > 1 ? Scale/2 : 1;
+                    return (
+                        <g 
+                        pointerEvents="none"
+                        transform={`translate(${p[0]}, ${p[1]}) scale(${1 / s})`}
+                        >
+                            <rect
+                            x={-10}
+                            y={20}
+                            width={160}
+                            height={60}
+                            rx="10"
+                            fill="white"
+                            stroke="black"
+                            />
+
+                            <text
+                            className="information"
+                            x={0}
+                            y={45}
+                            >
+                                {isInformation.includes("道") ? "道名" : "県名"} : {isInformation}
+                            </text>
+
+                            <text
+                            className="information"
+                            x={0}
+                            y={65}
+                            >
+                                来客者数 : {destinationPoeple[isInformation]}人
+                            </text>
+                        </g>
+                    );
+                })()}
+            </g>
+        </g>
+
+        <g>
+            <text
+            x="0"
+            y="130"
+            fill="none"
+            stroke="black"
+            >
+              表示出発地点名 : {prefecture}
+            </text>
+        </g>
+    </svg>
+  );
+}

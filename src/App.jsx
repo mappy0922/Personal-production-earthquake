@@ -10,6 +10,8 @@ import { travelData2010 } from "./PurposeTravel2010";
 import { transportationData2010 } from "./TransportationTravel2010";
 import { coords } from "./coords";
 import { feature } from "topojson-client";
+import SvgMap from "./SvgMap";
+import SvgLabel from "./SvgLabel";
 
 const MapName = [
   "日本地図",
@@ -46,8 +48,12 @@ export default function App() {
   });
   const height = windowSize.height;
   
-  const [mapWidth, setMapWidth] = useState(window.innerWidth - 200);
+  const [userName, setUserName] = useState("");
+  const [isLogin, setIsLogin] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [isInformation, setIsInformation] = useState(null);
   const [legend_judge, setLegend_judge] = useState(true);
+  const [mousePos, setMousePos] = useState({x:0,y:0});
   const [Scale , setScale] = useState(1);
   const [Map , setMap] = useState(MapName[0]);
   const [traffic, setTraffic] = useState(transportation[0]);
@@ -88,6 +94,10 @@ export default function App() {
       }
     }
   });
+
+  const mapWidth = legend_judge
+    ? windowSize.width - 200
+    : windowSize.width;
 
   const handleReset = () => {
     if (traffic === "移動目的") {
@@ -225,12 +235,6 @@ export default function App() {
         width: window.innerWidth,
         height: window.innerHeight,
       });
-
-      setMapWidth(
-        legend_judge
-          ? window.innerWidth - 200
-          : window.innerWidth
-      );
     };
 
     window.addEventListener("resize", handleResize);
@@ -238,7 +242,7 @@ export default function App() {
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  }, [legend_judge]);
+  }, []);
 
   useEffect(() => {
     if (Map === "日本地図") {
@@ -384,9 +388,50 @@ export default function App() {
     destinationPoeple[item.to] += item.people;
   }
 
+  const login = () => {
+    const name = prompt("ユーザー名を入力してください");
+
+    if (name && name.trim() !== "") {
+      setUserName(name);
+      setIsLogin(true);
+      setShowMenu(false);
+    }
+  };
+
+  const logout = () => {
+    setUserName("");
+    setIsLogin(false);
+    setShowMenu(false);
+  };
+
   return (
     <div className="top">
-      <h1>日本人の移動可視化サイトマップ</h1>
+      <div className="header">
+        <h1>日本人の移動可視化サイトマップ</h1>
+
+        <div className="account">
+          <button
+          className="accountButton"
+          onClick={() => setShowMenu(!showMenu)}
+          >
+            👤
+          </button>
+
+          {showMenu && (
+            <div className="accountMenu">
+              {isLogin ? (
+                <>
+                <div>ようこそ!{userName}さん</div>
+                <button onClick={logout}>ログアウト</button>
+                </>
+              ) : (
+                <button onClick={login}>ログイン</button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="image">
         <div className="Scale-Button">
           <div>現在の倍率 : {Scale}倍</div>
@@ -398,7 +443,7 @@ export default function App() {
           <button onClick={() => {
             setLegend_judge(prev => !prev);
           }}>
-            {legend_judge ? "×" : "←"}
+            {legend_judge ? "≡" : "←"}
           </button>
         </div>
 
@@ -465,166 +510,45 @@ export default function App() {
           </div>
         </div>
 
-        <svg ref={svgRef} width={mapWidth} height={height}>
-          <g  id="imageLayer">
-            <g ref={layerRef}></g>
-            
-            <g id="lineLayer">
-              {projectionRef.current && filterData.map((item,i) => {
-                const from = projectionRef.current(item.fromCoord);
-                const to = projectionRef.current(item.toCoord);
+        <SvgMap
+          svgRef={svgRef}
+          mapWidth={mapWidth}
+          height={height}
+          layerRef={layerRef}
+          projectionRef={projectionRef}
 
-                const line_judge = [5000, 2500, 1000, 100]
+          filterData={filterData}
+          coord={coord}
+          coords={coords}
 
-                if(!from || !to) {
-                  return null;
-                }
+          judge={judge}
+          circleColor={circleColor}
+          destinationPoeple={destinationPoeple}
 
-                const mx = (from[0] + to[0]) / 2;
-                const my = (from[1] + to[1]) / 2;
+          dataColor={dataColor}
+          active={active}
+          Scale={Scale}
 
-                const dx = to[0] - from[0];
-                const dy = to[1] - from[1];
+          setMousePos={setMousePos}
+          setPrefecture={setPrefecture}
+          setIsInformation={setIsInformation}
 
-                const dist = Math.sqrt(dx*dx + dy*dy);
+          isInformation={isInformation}
 
-                const nx = i % 2 == 0 ? dy / dist : -dy / dist;
-                const ny = i % 2 == 1 ? dx / dist : -dx / dist;
+          prefecture={prefecture}
+        />
 
-                const curveHeight = dist * 2;
-
-                const cx = mx + nx * curveHeight;
-                const cy = my + ny * curveHeight;
-
-                const d = `
-                M ${from[0]} ${from[1]}
-                Q ${cx} ${cy}
-                  ${to[0]} ${to[1]}
-                `;
-
-                
-                return (
-                  <path
-                  key={i}
-                  className="Number-of-people-moving-line"
-                  d={d}
-                  fill="none"
-                  stroke={dataColor[item.purpose]}
-                  strokeWidth={judge(item.people, line_judge)/Scale}
-                  strokeOpacity={active[item.purpose] ? 0 : 0.5}
-                  />
-                );
-                
-              })}
-
-              {projectionRef.current && coord.map((item,i) => {
-                const position = projectionRef.current(coords[item]);
-                const circle_judge = [100000, 50000, 10000, 1000];
-                return (
-                  <g key={i}>
-                    <circle
-                    className="Number-of-people-moving-circle"
-                    cx={position[0]}
-                    cy={position[1]}
-                    r={judge(destinationPoeple[item], circle_judge)/Scale}
-                    fill={circleColor(destinationPoeple[item])}
-                    onClick={() => setPrefecture(item)}
-                    />
-
-                    {Scale >= 2 && (
-                      <text
-                      className="prefecture"
-                      x={position[0]+2}
-                      y={position[1]-2}
-                      fontSize={8/(Scale/2)}
-                      fill="black"
-                      >
-                        {item}
-                      </text>
-                    )}
-                  </g>
-                );
-              })}
-            </g>
-          </g>
-
-          <g>
-            <text
-            x="0"
-            y="130"
-            fill="none"
-            stroke="black"
-            >
-              表示出発地点名 : {prefecture}
-            </text>
-          </g>
-
-        </svg>
-
-        <svg width="200" height={height} className={`Legend_all ${!legend_judge ? "hide" : ""}`}>
-          <text
-          x="5"
-          y="20"
-          fontSize={12}
-          >
-            {traffic === "移動目的" ? "・目的別" : "・手段別"}
-          </text>
-          {label.map((name, i) => (
-            <g 
-            transform={`translate(0, ${35*i+35})`}
-            className={active[name] ? "fade" : ""}
-            onClick={() => setActive({
-                ...active,//スプレッド構文(上書き処理に利用できる)
-                [name]: !active[name]
-            })}
-            >
-              <rect
-              x="10"
-              width="9"
-              height="9"
-              fill={dataColor[name]}
-              />
-
-              <text 
-              className = "legend"
-              x="30"
-              y="8"
-              >
-                  {name}
-              </text>
-            </g>
-          ))}
-
-          <text
-          x="5"
-          y="300"
-          fontSize={12}
-          >
-            ・来客者数
-          </text>
-          {circleSize.map((name,i) => (
-            <g
-            key={i}
-            transform={`translate(0, ${35*i+80})`}
-            >
-              <circle
-              cx="15"
-              cy="240"
-              r="5"
-              fill={circleColor(name)}
-              />
-
-              <text
-              x="35"
-              y="245"
-              fontSize={12}
-              >
-                {i < 4 ? `${name}人以上` : `${name}`}
-              </text>
-            </g>
-          ))}
-
-        </svg>
+        <SvgLabel
+        height={height}
+        legend_judge={legend_judge}
+        traffic={traffic}
+        label={label}
+        active={active}
+        setActive={setActive}
+        dataColor={dataColor}
+        circleSize={circleSize}
+        circleColor={circleColor}
+        />
 
       </div>
     </div>
