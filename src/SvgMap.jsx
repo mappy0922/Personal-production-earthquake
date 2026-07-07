@@ -97,7 +97,6 @@ export default function SvgMap({
                             fill={circleColor(destinationPoeple[item])}
                             onClick={() => setPrefecture(item)}
                             onMouseEnter={() => setIsInformation(item)}
-                            onMouseLeave={() => setIsInformation(null)}
                             />
 
                             {Scale >= 2 && (
@@ -114,43 +113,6 @@ export default function SvgMap({
                         </g>
                     );
                 })}
-
-                {isInformation && projectionRef.current && (() => {
-                    const p = projectionRef.current(coords[isInformation]);
-                    const s = Scale > 1 ? Scale/2 : 1;
-                    return (
-                        <g 
-                        pointerEvents="none"
-                        transform={`translate(${p[0]}, ${p[1]}) scale(${1 / s})`}
-                        >
-                            <rect
-                            x={-10}
-                            y={20}
-                            width={160}
-                            height={60}
-                            rx="10"
-                            fill="white"
-                            stroke="black"
-                            />
-
-                            <text
-                            className="information"
-                            x={0}
-                            y={45}
-                            >
-                                {isInformation.includes("道") ? "道名" : "県名"} : {isInformation}
-                            </text>
-
-                            <text
-                            className="information"
-                            x={0}
-                            y={65}
-                            >
-                                来客者数 : {destinationPoeple[isInformation]}人
-                            </text>
-                        </g>
-                    );
-                })()}
             </g>
         </g>
 

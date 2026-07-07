@@ -69,9 +69,8 @@ coords = {
 # =========================
 # Excelファイル
 # =========================
-"""
-holiday_file = "./data_fecth/2010年度/000991451.xls"
-weekday_file = "./data_fecth/2010年度/000991452.xls"
+holiday_file = "./data_fecth/2005年度/000991449.xls"
+weekday_file = "./data_fecth/2005年度/000991450.xls"
 
 travelData = []
 
@@ -165,9 +164,9 @@ with open(
 
 print("件数:", len(travelData))
 print("travelData.js を生成しました")
-"""
 
-traffic_file = "./data_fecth/2000年度/000991448.xls"
+"""
+traffic_file = "./data_fecth/2005年度/000991408.xls"
 
 travelData = []
 
@@ -187,10 +186,10 @@ for sheet in traffic_xls.sheet_names:
     purpose = sheet
 
     # 目的地一覧
-    destinations = traffic_df.iloc[7, 2:52]
+    destinations = traffic_df.iloc[8, 2:52]
 
     # 出発地一覧
-    for row in range(8, 58):
+    for row in range(9, 59):
 
         origin = traffic_df.iloc[row, 1]
 
@@ -248,3 +247,4 @@ with open(
 
 print("件数:", len(travelData))
 print("travelData.js を生成しました")
+"""

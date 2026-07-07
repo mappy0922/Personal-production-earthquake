@@ -15,14 +15,27 @@ export default function SvgLabel({
       height={height}
       className={`Legend_all ${!legend_judge ? "hide" : ""}`}
     >
-      <line
-      x1="0"
-      y1="0"
-      x2="0"
-      y2={height}
+      <rect
+      className="purpose"
+      x="7"
+      y="1"
+      width="187"
+      height="270"
+      fill="lightgreen"
       stroke="black"
-      strokeWidth="4"
-      />
+      rx="10">
+      </rect>
+
+      <rect
+      className="transportation"
+      x="7"
+      y="275"
+      width="187"
+      height="210"
+      fill="lightgreen"
+      stroke="black"
+      rx="10">
+      </rect>
 
       <text x="5" y="20" fontSize={20}>
         {traffic === "移動目的" ? "・目的別" : "・手段別"}

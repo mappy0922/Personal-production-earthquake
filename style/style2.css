@@ -1,0 +1,31 @@
+html,
+body {
+    margin: 0px;
+    padding: 0px;
+    cursor: auto;
+}
+
+h1 {
+    text-align: center;
+}
+
+h2 {
+  font-size: 30px;
+  text-align: center;
+  text-decoration: underline;
+  margin-bottom: 30px;
+}
+
+.box1,
+.box2,
+.box3{
+    background: yellowgreen;
+    border: 3px solid black;
+    border-radius: 10px;             /* 角丸 */
+    box-shadow: 0 4px 6px #0003;     /* 影 */
+    min-height: 300px;
+    height: auto;
+    margin-bottom: 30px;
+    padding: 20px;
+    box-sizing: border-box;
+}

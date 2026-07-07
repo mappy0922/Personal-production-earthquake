@@ -6,6 +6,8 @@ import { travelData1995 } from "./PurposeTravel1995";
 import { transportationData1995 } from "./TransportationTravel1995";
 import { travelData2000 } from "./PurposeTravel2000";
 import { trasnportationData2000 } from "./TransportationTravel2000";
+import { travelData2005 } from "./PurposeTravel2005";
+import { transportationData2005 } from "./TransportationTravel2005";
 import { travelData2010 } from "./PurposeTravel2010";
 import { transportationData2010 } from "./TransportationTravel2010";
 import { coords } from "./coords";
@@ -49,8 +51,19 @@ export default function App() {
   const height = windowSize.height;
   
   const [userName, setUserName] = useState("");
+  const [isFovarite, setIsFavorite] = useState(() => {
+    const saved = localStorage.getItem("isFavorite");
+
+    if(saved) {
+      return JSON.parse(saved);
+    }
+    return Object.fromEntries(
+      coord.map(name => [name, false])
+    );
+  });
   const [isLogin, setIsLogin] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
   const [isInformation, setIsInformation] = useState(null);
   const [legend_judge, setLegend_judge] = useState(true);
   const [mousePos, setMousePos] = useState({x:0,y:0});
@@ -61,6 +74,10 @@ export default function App() {
   const [prefecture, setPrefecture] = useState(coord[0]);
   const [mapData, setMapData] = useState(null);
   const [bounds, setBounds] = useState(null);
+  const [favoriteArr, setFavoriteArr] = useState(() => {
+    const saved = localStorage.getItem("favoriteArr");
+    return saved ? JSON.parse(saved) : [];
+  });
   const [active, setActive] = useState(() => {
     
     if(traffic === "移動目的") {
@@ -144,6 +161,9 @@ export default function App() {
     if(year === "2000年度") {
       file = travelData2000;
     }
+    if(year === "2005年度") {
+      file = travelData2005;
+    }
     if(year === "2010年度") {
       file = travelData2010;
     }
@@ -156,6 +176,9 @@ export default function App() {
     }
     if(year === "2000年度") {
       file = trasnportationData2000;
+    }
+    if(year === "2005年度") {
+      file = transportationData2005;
     }
     if(year === "2010年度") {
       file = transportationData2010;
@@ -352,6 +375,30 @@ export default function App() {
 
   }, [Map,bounds,mapWidth]);
 
+  useEffect(() => {
+    const login = localStorage.getItem("isLogin");
+    const name = localStorage.getItem("userName");
+
+    if (login === "true") {
+      setIsLogin(true);
+      setUserName(name);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "isFavorite",
+      JSON.stringify(isFovarite)
+    );
+  }, [isFovarite]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "favoriteArr",
+      JSON.stringify(favoriteArr)
+    );
+  }, [favoriteArr]);
+
   const zoomIn = () => {
     const svg = d3.select(svgRef.current);
 
@@ -375,6 +422,22 @@ export default function App() {
 
   }
 
+  const favoriteManagement = (name, nextFavorite) => {
+    if(nextFavorite) {
+      setFavoriteArr(prev => [
+        ...prev,
+        {
+          県名: name,
+          来客者数: `${destinationPoeple[name]}人`
+        }
+      ]);
+    } else {
+      setFavoriteArr(prev =>
+        prev.filter(item => item["県名"] !== name)
+      );
+    }
+  };
+
   const filterData = file.filter((item) => prefecture === item.from);
 
   const label=Array.from(new Set(filterData.map(({purpose})=>purpose)));
@@ -394,6 +457,10 @@ export default function App() {
     if (name && name.trim() !== "") {
       setUserName(name);
       setIsLogin(true);
+
+      localStorage.setItem("isLogin", "true");
+      localStorage.setItem("userName", name);
+
       setShowMenu(false);
     }
   };
@@ -401,7 +468,12 @@ export default function App() {
   const logout = () => {
     setUserName("");
     setIsLogin(false);
+
+    localStorage.removeItem("isLogin");
+    localStorage.removeItem("userName");
+
     setShowMenu(false);
+    setFavoriteArr([]);
   };
 
   return (
@@ -418,15 +490,59 @@ export default function App() {
           </button>
 
           {showMenu && (
-            <div className="accountMenu">
+            <div className="accountMenu"
+            onMouseLeave={() => setShowMenu(!showMenu)}>
               {isLogin ? (
                 <>
                 <div>ようこそ!{userName}さん</div>
-                <button onClick={logout}>ログアウト</button>
+                <button onClick={() => {
+                  logout();
+                  setIsFavorite(false);}}>ログアウト</button>
                 </>
               ) : (
+                <>
                 <button onClick={login}>ログイン</button>
+                </>
               )}
+            </div>
+          )}
+        </div>
+
+        <div className="Legend">
+          <button
+          className="legendButton"
+          onClick={() => setShowLegend(!showLegend)}
+          >
+            ≡
+          </button>
+
+          {showLegend && (
+            <div className="legendMenu"
+            onMouseLeave={() => setShowLegend(!showLegend)}>
+              <>
+              <button onClick={() => {
+                setLegend_judge(prev => !prev);
+              }}>
+                {!legend_judge ? "凡例を見る" : "凡例を閉じる"}
+              </button>
+
+              <button onClick={() => (window.open('./index2.html', '_blank'))}>
+                使い方
+              </button>
+
+              <button 
+              onClick={() => {
+                localStorage.setItem("favoriteArr", JSON.stringify(favoriteArr));
+                window.location.href = "./index3.html";
+              }}
+              >
+                お気に入り一覧
+              </button>
+
+              <button onClick={() => (window.open('https://forms.gle/kSxSu3UmnEzXxabs8', '_blank'))}>
+                問い合わせ
+              </button>
+              </>
             </div>
           )}
         </div>
@@ -437,14 +553,6 @@ export default function App() {
           <div>現在の倍率 : {Scale}倍</div>
           <button onClick={zoomIn}>+</button>
           <button onClick={zoomOut}>-</button>
-        </div>
-
-        <div className="legend_menu">
-          <button onClick={() => {
-            setLegend_judge(prev => !prev);
-          }}>
-            {legend_judge ? "≡" : "←"}
-          </button>
         </div>
 
         <div className="legend_reset">
@@ -467,24 +575,6 @@ export default function App() {
                 }}
             >
                 {yearSelection.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-            </select>
-          </div>
-          
-          <div className="item">
-            <label>地図選択</label>
-            <select
-                className="Select"
-                value={Map}
-                onChange={(e) => {
-                  setMap(e.target.value);
-                  Reset();
-                }}
-            >
-                {MapName.map((p) => (
                   <option key={p} value={p}>
                     {p}
                   </option>
@@ -537,6 +627,47 @@ export default function App() {
 
           prefecture={prefecture}
         />
+
+        {isInformation && (
+          <div
+          className="informationBox"
+          onMouseLeave={() => setIsInformation(null)}
+          style={{
+            left: mousePos.x + 10,
+            top: mousePos.y + 10,
+          }}
+          >
+            <div>
+              {isInformation.includes("道") ? "道名" : "県名"} :
+              {isInformation}
+            </div>
+
+            <div>
+              来客者数 :{destinationPoeple[isInformation]}人
+            </div>
+
+            <button
+            onClick={() => {
+              if (!isLogin) {
+                window.alert("アカウントログインを行ってください");
+                return;
+              }
+
+              const nextFavorite = !isFovarite[isInformation];
+
+              setIsFavorite(prev => ({
+                ...prev,
+                [isInformation]: nextFavorite,
+              }));
+
+              favoriteManagement(isInformation, nextFavorite);
+            }}
+            >
+              {!isFovarite[isInformation] ? "お気に入り登録する" : "お気に入り解除"}
+            </button>
+          </div>
+        )}
+
 
         <SvgLabel
         height={height}
